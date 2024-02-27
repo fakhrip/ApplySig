@@ -16,11 +16,11 @@ try:
 	from typing import List
 except ImportError:
 	pass
-from itertools import izip, islice
+from itertools import islice
 try:
-	from StringIO import StringIO
+	from BytesIO import BytesIO
 except ImportError:
-	from io import StringIO
+	from io import BytesIO
 import zlib
 import struct
 
@@ -605,7 +605,7 @@ def parse_flirt_file(f):
 	if header.features & FlirtFeatureFlag.FEATURE_COMPRESSED:
 		if header.version == 5:
 			raise FlirtException('Compression in unsupported on flirt v5')
-		f = StringIO(zlib.decompress(f.read()))  # Untested
+		f = BytesIO(zlib.decompress(f.read()))  # Untested
 
 	tree = parse_tree(f, header.version, is_root=True)
 
@@ -620,7 +620,7 @@ def match_node_pattern(node, buff, offset):
 	# Check if we have enough data
 	if len(buff) < offset + len(node.pattern):
 		return False
-	for i, (b, p, v) in enumerate(izip(islice(buff, offset, len(buff)), node.pattern, node.variant_mask)):
+	for i, (b, p, v) in enumerate(zip(islice(buff, offset, len(buff)), node.pattern, node.variant_mask)):
 		if b < 0:
 			b = b + 256
 		if v:
@@ -703,10 +703,11 @@ def funk_rename(addr, funk):
 
 def apply_sig(flirt):
 	funk = getFirstFunction()
-	#print(funk.entryPoint
+	print(funk)
+	print(funk.getEntryPoint())
 	#print(get_function_end(funk))
 	while funk is not None:
-		funk_start = int(funk.entryPoint.toString(), 16)
+		funk_start = int(funk.getEntryPoint().toString(), 16)
 		funk_end   = get_function_end(funk)
 		funk_buf   = getBytes(parseAddress(hex(funk_start).strip('L')), funk_end - funk_start + 0x100)
 		#print('%x - %x' % (funk_start, funk_end))
@@ -717,8 +718,8 @@ f = ask_sig()
 print('Parse Flirt File.....')
 try:
 	flirt = parse_flirt_file(f)
-except:
-	print('Parsing Failed!')
+except Exception as e:
+	print('Parsing Failed!', e)
 print('Name: ', flirt.header.library_name)
 print('Count:', flirt.header.n_functions)
 #print('ARCH: ', flirt.header.arch)
